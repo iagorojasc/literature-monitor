@@ -1,0 +1,3 @@
+requests
+python-docx
+openai   # solo si usas --translate

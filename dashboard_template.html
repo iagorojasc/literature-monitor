@@ -1,0 +1,434 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Monitor bibliográfico</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%231d4ed8'/%3E%3Cg fill='%23fff'%3E%3Crect x='8' y='29' width='48' height='5' rx='2'/%3E%3Crect x='13' y='17' width='6' height='29' rx='2'/%3E%3Crect x='45' y='17' width='6' height='29' rx='2'/%3E%3Crect x='20' y='22' width='4' height='19' rx='1.5'/%3E%3Crect x='40' y='22' width='4' height='19' rx='1.5'/%3E%3C/g%3E%3Cpath d='M12 54 C 24 52, 36 46, 52 38' fill='none' stroke='%23fff' stroke-width='2.5' stroke-linecap='round' opacity='.85'/%3E%3C/svg%3E">
+<style>
+:root{
+  --bg:#f6f7f9; --card:#fff; --ink:#1b1f24; --muted:#5d6670; --line:#e1e5ea;
+  --thesis:#c2410c; --general:#1d4ed8; --c3:#0f766e; --c4:#7c3aed; --cr:#6b7280;
+  --q1:#15803d; --q2:#65a30d; --q3:#d97706; --q4:#b91c1c; --na:#9aa3ad; --accent:#1d4ed8;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0f1317; --card:#171c22; --ink:#e8ecf1; --muted:#9aa5b1; --line:#2a323b;
+    --thesis:#fb923c; --general:#60a5fa; --c3:#2dd4bf; --c4:#a78bfa; --cr:#9ca3af;
+    --q1:#4ade80; --q2:#a3e635; --q3:#fbbf24; --q4:#f87171; --na:#6b7580; --accent:#60a5fa;
+  }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+.wrap{max-width:1180px;margin:0 auto;padding:24px 16px 64px}
+h1{font-size:clamp(30px,5.2vw,46px);line-height:1.05;margin:0;letter-spacing:-.02em}
+.brand{display:flex;gap:16px;align-items:center}
+.logo{width:76px;height:76px;flex:none;filter:drop-shadow(0 2px 6px rgba(0,0,0,.18))}
+.tag{font-size:clamp(14px,2vw,18px);color:var(--muted);margin-top:4px}
+.month{display:inline-block;margin-top:10px;padding:3px 14px;border-radius:999px;background:var(--accent);color:#fff;font-weight:700;font-size:clamp(14px,2vw,18px);letter-spacing:.01em}
+h2{font-size:16px;margin:0 0 12px}
+.sub{color:var(--muted);font-size:13px}
+.top{display:flex;gap:12px;justify-content:space-between;align-items:flex-start;flex-wrap:nowrap;margin-bottom:20px}
+.btn{border:1px solid var(--line);background:var(--card);color:var(--ink);padding:7px 12px;border-radius:8px;cursor:pointer;font:inherit;font-size:13px}
+.btn:hover{border-color:var(--accent)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:16px}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:16px}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+.kpi b{display:block;font-size:26px;line-height:1.1}
+.kpi span{color:var(--muted);font-size:12px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media (max-width:820px){.grid2{grid-template-columns:1fr}}
+.bar{display:grid;grid-template-columns:minmax(120px,42%) 1fr 36px;gap:8px;align-items:center;margin:6px 0;font-size:13px}
+.bar .track{background:var(--line);border-radius:5px;height:12px;overflow:hidden}
+.bar .fill{height:100%;border-radius:5px}
+.bar .n{text-align:right;font-variant-numeric:tabular-nums}
+.bar .lbl{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{padding:7px 8px;border-bottom:1px solid var(--line);text-align:left;vertical-align:middle}
+th{font-weight:600;color:var(--muted);cursor:pointer;white-space:nowrap;user-select:none}
+th:hover{color:var(--ink)}
+tr.jr:hover{background:color-mix(in srgb,var(--accent) 7%,transparent);cursor:pointer}
+tr.sel{background:color-mix(in srgb,var(--accent) 14%,transparent)}
+.tablewrap{overflow-x:auto}
+.pager{display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex:none;margin-left:auto}
+.brand{min-width:0}
+@media (max-width:520px){.logo{width:52px;height:52px}.brand{gap:10px}.nav{width:38px;height:38px}}
+.pager .arrows{display:flex;gap:6px}
+.nav{width:44px;height:44px;padding:0;display:grid;place-items:center;border-radius:12px}
+.nav svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+.nav:disabled{opacity:.35;cursor:default}
+.nav:disabled:hover{border-color:var(--line)}
+.nav:not(:disabled):hover{background:var(--accent);color:#fff;border-color:var(--accent)}
+.b-dud{color:#b45309;border-color:#b45309}
+@media (prefers-color-scheme: dark){.b-dud{color:#fbbf24;border-color:#fbbf24}}
+.screenbox{border-left:4px solid var(--accent);background:color-mix(in srgb,var(--accent) 6%,var(--card))}
+.screenbox.warn{border-left-color:#b45309}
+.so{padding:8px 0;border-bottom:1px solid var(--line);font-size:13px}.so:last-child{border-bottom:0}.so .why{color:var(--muted)}
+.oneline{margin:8px 0 2px;padding:7px 10px;border-radius:8px;background:color-mix(in srgb,var(--accent) 7%,transparent);font-size:14px}
+.fact{display:inline-block;margin:3px 4px 0 0;padding:0 8px;border-radius:999px;border:1px solid var(--line);font-size:11.5px;color:var(--muted);white-space:nowrap}
+.topic{display:inline-block;margin:0 4px 0 0;padding:1px 8px;border-radius:6px;background:color-mix(in srgb,var(--accent) 12%,transparent);color:var(--ink);font-size:11.5px;cursor:pointer}
+.flag{display:inline-block;padding:1px 9px;border-radius:999px;border:1px solid #c2410c;color:#c2410c;font-weight:700;font-size:11.5px}
+@media (prefers-color-scheme: dark){.flag{color:#fb923c;border-color:#fb923c}}
+.actions{display:flex;gap:8px;align-items:center;margin-top:8px;flex-wrap:wrap}
+.btn.sm{padding:3px 10px;font-size:12px}
+.btn.zok{color:#15803d;border-color:#15803d}
+select.sm{font-size:12px;padding:3px 6px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--ink)}
+.notebox textarea{width:100%;min-height:64px;margin-top:6px;font:inherit;font-size:13px;padding:6px 8px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--ink)}
+.art.m-leido{opacity:.58}
+.art.m-importante{border-left:4px solid #ca8a04;padding-left:10px}
+.art.m-releer{border-left:4px solid #7c3aed;padding-left:10px}
+.tools{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:10px 0 4px;font-size:13px}
+.tools .mode{color:var(--muted);margin-right:auto}
+#zstatus{font-size:13px;min-height:18px;margin:2px 0 6px}
+a{color:var(--accent);text-decoration:none}
+a:visited{color:var(--accent)}
+a:hover{text-decoration:underline}
+.summary h3{font-size:14px;margin:16px 0 6px}
+.summary p{margin:0 0 10px;max-width:92ch}
+.summary ol,.summary ul{margin:0;padding-left:20px}
+.summary li{margin-bottom:10px;max-width:92ch}
+.summary .lead{font-size:16px}
+.summary.pend{border-left:4px solid #b45309}
+.pager .pn{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+.badge{display:inline-block;padding:1px 8px;border-radius:999px;font-size:11.5px;font-weight:600;border:1px solid currentColor;white-space:nowrap}
+.q1{color:var(--q1)}.q2{color:var(--q2)}.q3{color:var(--q3)}.q4{color:var(--q4)}.na{color:var(--na);font-weight:400}
+.t1{color:var(--thesis)}.t2{color:var(--general)}.t3{color:var(--c3)}.t4{color:var(--c4)}.t5,.t6,.t7,.t8{color:var(--cr)}
+.pop{display:inline-block;height:8px;border-radius:4px;background:var(--accent);vertical-align:middle;min-width:2px}
+.filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.filters input,.filters select{border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:8px;padding:7px 10px;font:inherit;font-size:13px}
+.filters input[type=search]{flex:1;min-width:200px}
+.art{padding:12px 0;border-bottom:1px solid var(--line)}
+.art:last-child{border-bottom:0}
+.art h3{font-size:14.5px;margin:0 0 3px;font-weight:600}
+.art a{color:var(--accent);text-decoration:none}
+.art a:hover{text-decoration:underline}
+.meta{color:var(--muted);font-size:12.5px}
+.tags{margin-top:5px;display:flex;gap:6px;flex-wrap:wrap}
+details summary{cursor:pointer;color:var(--muted);font-size:12.5px;margin-top:4px}
+details p{margin:6px 0 0;font-size:13px}
+.note{color:var(--muted);font-size:12.5px;margin-top:8px}
+.warn{color:var(--q3)}
+.empty{padding:40px;text-align:center;color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <div class="brand">
+      <svg class="logo" viewBox="0 0 64 64" role="img" aria-label="Logo del monitor">
+        <rect width="64" height="64" rx="14" fill="var(--accent)"/>
+        <g fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round"><circle cx="28" cy="28" r="12"/><path d="M37 37 L50 50"/></g>
+        <g fill="#fff"><rect x="21" y="30" width="3.5" height="6" rx="1"/><rect x="26.2" y="24" width="3.5" height="12" rx="1"/><rect x="31.4" y="27" width="3.5" height="9" rx="1"/></g>
+      </svg>
+      <div>
+        <h1>Monitor bibliográfico</h1>
+        <div class="tag">EDITAR: tu tema</div>
+        <div class="month" id="month"></div>
+        <div class="sub" id="period" style="margin-top:6px"></div>
+      </div>
+    </div>
+    <nav class="pager" aria-label="Navegación entre meses">
+      <div class="arrows">
+        <button class="btn nav" id="prev" aria-label="Mes anterior" title="Mes anterior">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button>
+        <button class="btn nav" id="next" aria-label="Mes siguiente" title="Mes siguiente">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>
+      </div>
+      <div class="pn" id="pageno"></div>
+    </nav>
+  </div>
+  <div id="app"></div>
+</div>
+
+<script>
+const EMBEDDED = /*__DATA__*/null;
+
+const $ = (s, el=document) => el.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const PRI_CLASS = {1:"t1",2:"t2",3:"t3",4:"t4",5:"t5",6:"t6",7:"t7",8:"t8"};
+const PRI_COLOR = {1:"var(--thesis)",2:"var(--general)",3:"var(--c3)",4:"var(--c4)",5:"var(--cr)",6:"var(--cr)",7:"var(--cr)",8:"var(--cr)"};
+let D = null, state = {journal:"", sort:{key:"n",dir:-1}};
+
+function qClass(q){ return q ? "q"+String(q).replace(/\D/g,"").slice(0,1) : "na"; }
+function qBadge(q, prefix=""){ return q ? `<span class="badge ${qClass(q)}">${esc(prefix+q)}</span>` : `<span class="badge na">—</span>`; }
+function decile(d){ if(!d) return null; const n = String(d).replace(/\D/g,""); return n ? "D"+n : String(d); }
+const num = (v, dp=2) => (v===null||v===undefined||v==="") ? "—" : (isNaN(+v) ? esc(v) : (+v).toFixed(dp));
+
+function bars(rows, colorFn){
+  const max = Math.max(1, ...rows.map(r => r.n));
+  return rows.map(r => `<div class="bar"><div class="lbl" title="${esc(r.label)}">${esc(r.label)}</div>
+    <div class="track"><div class="fill" style="width:${(r.n/max*100).toFixed(1)}%;background:${colorFn(r)}"></div></div>
+    <div class="n">${r.n}</div></div>`).join("");
+}
+
+function render(){
+  const A = D.articles, J = D.journals, M = D.meta;
+  const mm = (d)=>{const [y,m_,dd]=d.split("-").map(Number); return new Date(y,m_-1,dd)};
+  const ds = mm(M.start), de = mm(M.end), lastDay = new Date(de.getFullYear(), de.getMonth()+1, 0).getDate();
+  const fullMonth = ds.getDate()===1 && ds.getMonth()===de.getMonth() && ds.getFullYear()===de.getFullYear() && de.getDate()===lastDay;
+  const fmt = new Intl.DateTimeFormat("es",{day:"numeric",month:"short",year:"numeric"});
+  const cap = s=>s.charAt(0).toUpperCase()+s.slice(1);
+  $("#month").textContent = fullMonth ? cap(new Intl.DateTimeFormat("es",{month:"long",year:"numeric"}).format(ds)) : `${fmt.format(ds)} – ${fmt.format(de)}`;
+  $("#period").textContent = `Periodo (${M.datetype}): ${M.start} → ${M.end} · generado ${M.generated} · ${M.unique_records} registros únicos`;
+  const byPri = {}; A.forEach(a => byPri[a.priority] = (byPri[a.priority]||0)+1);
+  const nJ = Object.keys(J).length;
+  const core = A.filter(a=>a.core).length;
+  const q1 = A.filter(a => (J[a.journal]?.sjr_quartile||"")==="Q1" || (J[a.journal]?.jcr_quartile||"")==="Q1").length;
+
+  const kp = (v,l,c="") => `<div class="kpi"><b ${c?`style="color:${c}"`:""}>${v}</b><span>${l}</span></div>`;
+  const kpis = kp(A.length,"registros únicos") + kp(byPri[1]||0,"tesis (núcleo)","var(--thesis)")
+    + kp(byPri[2]||0,"tema general","var(--general)")
+    + kp(nJ,"revistas distintas") + kp(core,"en revistas core ★") + kp(M.has_scimago||M.has_jcr ? q1 : "—","artículos en revistas Q1");
+
+  // temática
+  const tierRows = M.tiers.map(t => ({label:`${t.tier} · ${t.label}`, n:t.count, pri:t.priority}));
+  const themeBars = bars(tierRows, r => PRI_COLOR[r.pri]);
+  // distribución de cuartiles (SJR), año, tipo
+  const qd = {Q1:0,Q2:0,Q3:0,Q4:0,"Sin dato":0};
+  A.forEach(a => { const q = J[a.journal]?.sjr_quartile; qd[q && qd[q]!==undefined ? q : "Sin dato"]++; });
+  const qRows = Object.entries(qd).map(([k,n])=>({label:k==="Sin dato"?"Sin dato":`SJR ${k}`,n,k}));
+  const jd = {Q1:0,Q2:0,Q3:0,Q4:0,"Sin dato":0};
+  A.forEach(a => { const q = J[a.journal]?.jcr_quartile; jd[q && jd[q]!==undefined ? q : "Sin dato"]++; });
+  const jRows = Object.entries(jd).map(([k,n])=>({label:k==="Sin dato"?"Sin dato":`JCR ${k}`,n,k}));
+  const jcrYear = (Object.values(J).find(j=>j.jcr_year)||{}).jcr_year;
+  const qCol = r => ({Q1:"var(--q1)",Q2:"var(--q2)",Q3:"var(--q3)",Q4:"var(--q4)"}[r.k]||"var(--na)");
+  const stOrder = M.study_types || [];
+  const stc = {}; A.forEach(a => { const k = a.study_type || "Otros"; stc[k]=(stc[k]||0)+1; });
+  const typeRows = [...stOrder, ...Object.keys(stc).filter(k=>!stOrder.includes(k))].filter(k=>stc[k]).map(k=>({label:k,n:stc[k]}));
+  const stPubmed = A.filter(a=>a.study_type_basis==="PubMed").length;
+  const years = {}; A.forEach(a => years[a.year||"s/f"]=(years[a.year||"s/f"]||0)+1);
+  const yearRows = Object.entries(years).sort().map(([label,n])=>({label,n}));
+
+  // revistas
+  const rows = Object.entries(J).map(([name,j]) => ({name, ...j}));
+  const {key, dir} = state.sort;
+  const val = r => key==="name" ? r.name.toLowerCase() : key==="sjr_quartile" ? (r.sjr_quartile||"Z") :
+                   key==="jcr_quartile" ? (r.jcr_quartile||"Z") : (+r[key] || -1);
+  rows.sort((a,b) => (val(a)>val(b)?1:val(a)<val(b)?-1:0) * dir);
+  const maxH = Math.max(1, ...rows.map(r => +r.oa_h_index || 0));
+  const th = (k,l) => `<th data-k="${k}">${l}${state.sort.key===k ? (state.sort.dir>0?" ▲":" ▼"):""}</th>`;
+  const jt = `<div class="tablewrap"><table><thead><tr>${th("name","Revista")}${th("n","Artículos")}${th("sjr_quartile","SJR Q")}
+    ${th("jcr_quartile","JCR Q")}<th>Decil</th>${th("jif","JIF")}${th("sjr","SJR")}${th("oa_2yr_mean_citedness","Citación 2 a.")}${th("oa_h_index","Popularidad (h-index)")}</tr></thead><tbody>
+    ${rows.map(r => `<tr class="jr ${state.journal===r.name?"sel":""}" data-j="${esc(r.name)}">
+      <td>${esc(r.name)}${r.core?" ★":""}</td><td>${r.n}</td><td>${qBadge(r.sjr_quartile)}</td><td>${qBadge(r.jcr_quartile)}</td>
+      <td>${r.jcr_decile?`<span class="badge ${r.jcr_decile==1||/^D?1$/.test(r.jcr_decile)?"q1":"na"}">${esc(decile(r.jcr_decile))}</span>`:`<span class="badge na">—</span>`}</td>
+      <td>${num(r.jif,3)}</td><td>${num(r.sjr,3)}</td><td>${num(r.oa_2yr_mean_citedness)}</td>
+      <td>${r.oa_h_index? `<span class="pop" style="width:${(r.oa_h_index/maxH*80).toFixed(0)}px"></span> ${r.oa_h_index}` : "—"}</td></tr>`).join("")}
+    </tbody></table></div>`;
+  const miss = [];
+  if(!M.has_scimago) miss.push("cuartil SJR (usa <code>--scimago</code> con el CSV de scimagojr.com)");
+  if(!M.has_jcr) miss.push("JCR Q, decil D y JIF (usa <code>--jcr</code> con tus datos de Clarivate)");
+  if(!M.has_openalex) miss.push("popularidad (OpenAlex desactivado)");
+
+  const SC = M.screening || {}, SO = D.screened_out || [];
+  const scBox = SC.backend ? `<div class="card screenbox ${SC.aviso?"warn":""}"><b>Cribado final con Claude</b> — ${SC.relevante||0} relevantes · ${SC.dudoso||0} dudosos (marcados ⚠) · ${SC.descartar||0} descartados${SC.sin_cribar?` · <span class="warn">${SC.sin_cribar} sin cribar</span>`:""}
+      <div class="note">${SC.model?`Modelo ${esc(SC.model)} · `:""}${SC.desde_api?`${SC.desde_api} con la API · `:""}${SC.desde_cache?`${SC.desde_cache} desde caché · `:""}Solo etiqueta la relevancia: título, autores y DOI siguen viniendo de PubMed/Crossref. Los descartados están al final de la página, con su razón.${SC.aviso?` <span class="warn">${esc(SC.aviso)}</span>`:""}</div></div>` : "";
+  const soBox = SO.length ? `<div class="card"><details><summary><b>Descartados por el cribado (${SO.length})</b> — pasaron las búsquedas pero parecen ajenos al tema</summary>
+      ${SO.map(t=>`<div class="so"><a href="${t.doi?`https://doi.org/${esc(t.doi)}`:(t.pmid?`https://pubmed.ncbi.nlm.nih.gov/${esc(t.pmid)}/`:"#")}" target="_blank" rel="noopener">${esc(t.title)}</a>
+        <div class="meta">${esc(t.journal)} (${esc(t.year)})${t.cites&&t.cites.length?` · cita a ${esc(t.cites.join("; "))}`:""}</div><div class="why">${esc(t.reason)}</div></div>`).join("")}
+    </details></div>` : "";
+  const tc = {}; A.forEach(a => ((a.note&&a.note.topics)||[]).forEach(x => tc[x]=(tc[x]||0)+1));
+  const topicRows = Object.entries(tc).sort((x,y)=>y[1]-x[1]).map(([label,n])=>({label,n}));
+  const thesisN = A.filter(a=>a.note&&a.note.thesis).length;
+  const SM = D.summary;
+  const byId = {}; A.forEach(a => { byId[a.pmid||""] = a; if(a.doi) byId[a.doi.toLowerCase()] = a; });
+  const mlabel = $("#month").textContent;
+  const smBox = SM ? `<div class="card summary"><h2>Resumen del mes</h2>
+      ${SM.overview.map((p,i)=>{ if(i===0) return `<p class="lead">${esc(p)}</p>`;
+        const m = p.match(/^([^.]{3,45}\.)\s([\s\S]*)$/); return m ? `<p><b>${esc(m[1])}</b> ${esc(m[2])}</p>` : `<p>${esc(p)}</p>`; }).join("")}
+      <h3>Para leer primero</h3>
+      <ol>${SM.highlights.map(h=>{ const a = byId[h.id] || byId[String(h.id).toLowerCase()];
+        const link = a ? (a.doi?`https://doi.org/${a.doi}`:(a.pmid?`https://pubmed.ncbi.nlm.nih.gov/${a.pmid}/`:"")) : "";
+        return `<li>${a?`<a href="${esc(link)}" target="_blank" rel="noopener"><b>${esc(a.title)}</b></a> <span class="meta">${esc(a.journal)} (${esc(a.year)})</span>`:`<b>${esc(h.id)}</b>`}<br>${esc(h.why)}</li>`; }).join("")}</ol>
+      ${SM.thesis&&SM.thesis.length?`<h3>Relevancia para tu tesis</h3><ul>${SM.thesis.map(b=>`<li>${esc(b)}</li>`).join("")}</ul>`:""}
+      ${SM.watch&&SM.watch.length?`<h3>A vigilar</h3><ul>${SM.watch.map(b=>`<li>${esc(b)}</li>`).join("")}</ul>`:""}
+      <div class="note">Redactado por ${esc(SM.by)} el ${esc(SM.date)}. Resume lo que dicen los resúmenes de PubMed/Crossref (cifras incluidas); no sustituye a leer los artículos.</div></div>`
+    : `<div class="card summary pend"><h2>Resumen del mes</h2><p>Pendiente de redactar. Abre una sesión de Claude Code en la carpeta del proyecto y di <b>«criba ${esc(mlabel.split(" ")[0].toLowerCase())}»</b>: además del cribado, escribe este resumen.</p></div>`;
+  $("#app").innerHTML = `
+    ${smBox}
+    ${scBox}
+    <div class="kpis">${kpis}</div>
+    <div class="card"><h2>Temática (artículos por nivel de búsqueda)</h2>${themeBars}
+      <div class="note">Un artículo puede estar en varios niveles, por eso los conteos se solapan. Los niveles B son los del núcleo de tu tesis.</div></div>
+    ${topicRows.length?`<div class="card"><h2>Temas del mes (artículos por etiqueta)</h2>${bars(topicRows,()=>"var(--accent)")}
+      <div class="note">Etiquetas asignadas por Claude al leer cada resumen; un artículo puede tener varias. Haz clic en una etiqueta de un artículo para filtrar por ella.${thesisN?` · <b>⚑ ${thesisN}</b> artículo(s) cercano(s) a tu tesis.`:""}</div></div>`:""}
+    <div class="grid2">
+      <div class="card"><h2>Calidad de las revistas (artículos por cuartil SJR)</h2>${bars(qRows,qCol)}
+        <div class="note">${miss.length?`<span class="warn">Faltan datos:</span> ${miss.join("; ")}. Nada se infiere: lo que no esté verificado aparece como «—».`:"Cuartiles SJR/JCR según los ficheros que aportaste."}</div></div>
+      <div class="card"><h2>Calidad de las revistas (artículos por cuartil JCR${jcrYear?` ${esc(jcrYear)}`:""})</h2>${bars(jRows,qCol)}
+        <div class="note">${M.has_jcr?"Mejor cuartil JIF entre las categorías JCR de la revista. «Sin dato»: la revista no figura en los ficheros JCR aportados (no se infiere).":"<span class=\"warn\">Sin datos JCR:</span> usa <code>--jcr</code> con tus exportaciones de Clarivate."}</div></div>
+    </div>
+    <div class="card"><h2>Tipo de estudio y año</h2>${bars(typeRows,()=>"var(--accent)")}
+        <div class="note">Clasificación automática: ${stPubmed} de ${A.length} salen del tipo de publicación de PubMed; el resto se deduce del título y el resumen (palabras clave). «Otros» = no se pudo determinar. Orientativo, no sustituye a la lectura del artículo.</div>
+        <div style="height:10px"></div>${bars(yearRows,()=>"var(--accent)")}</div>
+    <div class="card"><h2>Revistas ${state.journal?`— filtrando: ${esc(state.journal)} <button class="btn" id="clr">quitar filtro</button>`:"(clic en una fila para filtrar artículos)"}</h2>${jt}
+      <div class="note">Popularidad = h-index de la revista en OpenAlex; «Citación 2 a.» = media de citas a 2 años en OpenAlex (parecido al factor de impacto, <b>no</b> es el JIF). SJR/JCR proceden de ficheros que tú aportas.</div></div>
+    <div class="card"><h2>Artículos</h2>
+      <div class="filters">
+        <input type="search" id="q" placeholder="Buscar en título, autores o abstract…">
+        <select id="fp"><option value="">Todas las temáticas</option>${Object.keys(M.priority_labels).filter(k=>byPri[k]).map(k=>`<option value="${k}">${esc(M.priority_labels[k])}</option>`).join("")}</select>
+        <select id="ft"><option value="">Todos los niveles</option>${M.tiers.map(t=>`<option>${t.tier}</option>`).join("")}</select>
+        <select id="fq"><option value="">Cualquier cuartil</option><option>Q1</option><option>Q2</option><option>Q3</option><option>Q4</option><option value="NA">Sin dato</option></select>
+        <label class="meta"><input type="checkbox" id="fc"> solo ★ core</label>
+        <select id="ftop"><option value="">Todos los temas</option>${[...new Set(A.flatMap(a=>(a.note&&a.note.topics)||[]))].sort().map(x=>`<option>${esc(x)}</option>`).join("")}</select>
+        <label class="meta"><input type="checkbox" id="fth"> ⚑ cercanos a mi tesis</label>
+        <select id="fm"><option value="">Todas mis marcas</option><option value="none">Sin marcar</option><option value="leido">✓ Leídos</option>
+          <option value="importante">⭐ Importantes</option><option value="releer">🔁 Releer</option><option value="note">📝 Con nota</option></select>
+      </div>
+      <div class="tools" id="tools"></div><div id="zstatus"></div>
+      <div id="list"></div></div>
+    ${soBox}`;
+
+  $("#clr")?.addEventListener("click", ()=>{state.journal="";render();});
+  document.querySelectorAll("th[data-k]").forEach(h => h.addEventListener("click", () => {
+    const k = h.dataset.k; state.sort = {key:k, dir: state.sort.key===k ? -state.sort.dir : (k==="name"?1:-1)}; render(); }));
+  document.querySelectorAll("tr.jr").forEach(tr => tr.addEventListener("click", () => {
+    state.journal = state.journal===tr.dataset.j ? "" : tr.dataset.j; render(); $("#list").scrollIntoView({behavior:"smooth"}); }));
+  ["q","fp","ft","fq","fc","fm","ftop","fth"].forEach(id => $("#"+id).addEventListener("input", list));
+  list();
+}
+
+// ---------------- Marcas de lectura, Zotero y RIS ----------------
+const SRV = window.MONITOR_SERVER || null;            // presente solo si la página la sirve monitor_server.py (http://127.0.0.1:47651)
+let MARKS = {}, ZSAVED = new Set(), ZALIVE = null;
+const artId = a => ((a.pmid || a.doi || a.title.slice(0,80)) + "").toLowerCase();
+const slim = a => ({title:a.title, authors:a.authors, journal:a.journal, year:a.year, volume:a.volume, issue:a.issue, pages:a.pages,
+                    doi:a.doi, pmid:a.pmid, abstract:a.abstract});
+function loadMarks(){
+  if(SRV){ return fetch("/api/state").then(r=>r.json()).then(s=>{ MARKS = s.marks||{}; ZSAVED = new Set(s.zotero_saved||[]); ZALIVE = s.zotero_alive; }).catch(()=>{}); }
+  try{ MARKS = JSON.parse(localStorage.getItem("monitor_marks")||"{}"); }catch(e){ MARKS = {}; }
+  return Promise.resolve();
+}
+function saveMark(id, patch){
+  const cur = Object.assign({}, MARKS[id]||{}, patch);
+  if(!cur.state && !cur.note) delete MARKS[id]; else MARKS[id] = cur;
+  if(SRV) fetch("/api/marks",{method:"POST",headers:{"Content-Type":"application/json","X-Monitor-Token":SRV.token},body:JSON.stringify(Object.assign({id},patch))}).catch(()=>{});
+  else { try{ localStorage.setItem("monitor_marks", JSON.stringify(MARKS)); }catch(e){} }
+}
+function risName(n){ const p = n.trim().split(" "); const ini = p.length>1 && /^[A-ZÁÉÍÓÚÜÑ]{1,4}$/.test(p[p.length-1]) ? p.pop() : ""; return ini ? `${p.join(" ")}, ${ini.split("").join(". ")}.` : n; }
+function ris(a){
+  const L = ["TY  - JOUR"]; a.authors.forEach(x=>L.push("AU  - "+risName(x))); L.push("TI  - "+a.title); L.push("T2  - "+a.journal);
+  if(a.year) L.push("PY  - "+a.year); if(a.volume) L.push("VL  - "+a.volume); if(a.issue) L.push("IS  - "+a.issue);
+  if(a.pages){ const [sp,ep] = a.pages.split("-"); L.push("SP  - "+sp); if(ep) L.push("EP  - "+ep); }
+  if(a.doi) L.push("DO  - "+a.doi);
+  L.push("UR  - "+(a.doi?"https://doi.org/"+a.doi:(a.pmid?"https://pubmed.ncbi.nlm.nih.gov/"+a.pmid+"/":"")));
+  if(a.abstract) L.push("AB  - "+a.abstract.replace(/\s+/g," ")); if(a.pmid) L.push("AN  - PMID:"+a.pmid);
+  L.push("KW  - lit-monitor"); L.push("ER  - "); return L.join("\r\n");
+}
+function download(name, text, type="application/x-research-info-systems"){
+  const u = URL.createObjectURL(new Blob([text],{type:type+";charset=utf-8"})); const l = document.createElement("a");
+  l.href = u; l.download = name; document.body.appendChild(l); l.click(); l.remove(); setTimeout(()=>URL.revokeObjectURL(u),1500);
+}
+function zstatus(msg, bad){ const s = $("#zstatus"); if(s){ s.textContent = msg; s.style.color = bad ? "#b45309" : "#15803d"; } }
+async function zoteroSend(arts){
+  if(!SRV){ download(arts.length===1 ? "articulo.ris" : `Monitor_${monthKey(D)}.ris`, arts.map(ris).join("\r\n\r\n"));
+    zstatus(`Descargado .ris con ${arts.length} artículo(s): en Zotero, Archivo → Importar, y elige la colección «Monitor». (Para guardar directo en Zotero, abre el documento con el acceso del Escritorio con el servidor en marcha.)`); return; }
+  zstatus("Enviando a Zotero…");
+  try{
+    const r = await fetch("/api/zotero",{method:"POST",headers:{"Content-Type":"application/json","X-Monitor-Token":SRV.token},
+      body:JSON.stringify({articles:arts.map(slim), month:monthKey(D)})});
+    const j = await r.json();
+    if(r.ok){ j.results.forEach(x=>{ if(x.status!=="error") ZSAVED.add(x.key); }); zstatus(`✓ ${j.ok} de ${j.total} guardados en Zotero › ${j.collection}`); list(); }
+    else zstatus("⚠ "+(j.error||"Error al guardar en Zotero"), true);
+  }catch(e){ zstatus("⚠ No se pudo contactar con el servidor local.", true); }
+}
+const MARK_LABEL = {leido:"✓ leído", importante:"⭐ importante", releer:"🔁 releer"};
+
+function list(){
+  const A = D.articles, J = D.journals;
+  const q = $("#q").value.toLowerCase(), fp = $("#fp").value, ft = $("#ft").value, fq = $("#fq").value, fc = $("#fc").checked, fm = $("#fm").value, ftop = $("#ftop").value, fth = $("#fth").checked;
+  const out = A.filter(a => {
+    const jq = J[a.journal]?.sjr_quartile || J[a.journal]?.jcr_quartile || "";
+    return (!state.journal || a.journal===state.journal) && (!fp || String(a.priority)===fp) && (!ft || a.tiers.includes(ft))
+      && (!fq || (fq==="NA" ? !jq : (J[a.journal]?.sjr_quartile===fq || J[a.journal]?.jcr_quartile===fq))) && (!fc || a.core)
+      && (!q || (a.title+" "+a.authors.join(" ")+" "+a.abstract).toLowerCase().includes(q))
+      && (!ftop || (a.note && (a.note.topics||[]).includes(ftop))) && (!fth || (a.note && a.note.thesis))
+      && (!fm || (() => { const m = MARKS[artId(a)] || {}; return fm==="none" ? !m.state : fm==="note" ? !!m.note : m.state===fm; })());
+  });
+  const byArt = {}; out.forEach(a => byArt[artId(a)] = a);
+  $("#list").innerHTML = out.length ? out.map(a => {
+    const j = J[a.journal] || {};
+    const link = a.doi ? `https://doi.org/${a.doi}` : (a.pmid ? `https://pubmed.ncbi.nlm.nih.gov/${a.pmid}/` : "");
+    const au = a.authors.length>6 ? a.authors.slice(0,6).join(", ")+` … (+${a.authors.length-6})` : a.authors.join(", ");
+    const cite = `${a.journal}${a.year?` (${a.year})`:""}${a.volume?`;${a.volume}${a.issue?`(${a.issue})`:""}`:""}${a.pages?`:${a.pages}`:""}`;
+    const id = artId(a), mk = MARKS[id] || {}, zs = ZSAVED.has(id);
+    return `<div class="art ${mk.state?"m-"+mk.state:""}"><h3>${link?`<a href="${esc(link)}" target="_blank" rel="noopener">${esc(a.title)}</a>`:esc(a.title)}
+      ${a.retracted?'<span class="badge q4">RETRACTED</span>':""}</h3>
+      <div class="meta">${esc(au||"(sin autores)")} · ${esc(cite)}${a.core?" · ★":""}</div>
+      ${a.note&&a.note.thesis?`<div style="margin-top:4px"><span class="flag" title="${esc(a.note.thesis)}">⚑ Cercano a tu tesis</span> <span class="meta">${esc(a.note.thesis)}</span></div>`:""}
+      ${a.note&&a.note.line?`<div class="oneline"><b>En una línea:</b> ${esc(a.note.line)}${(a.note.facts||[]).map(f=>`<span class="fact">${esc(f)}</span>`).join("")}</div>`:""}
+      ${a.note&&a.note.topics&&a.note.topics.length?`<div style="margin-top:6px">${a.note.topics.map(x=>`<span class="topic" data-topic="${esc(x)}" title="Filtrar por este tema">${esc(x)}</span>`).join("")}</div>`:""}
+      ${a.cites&&a.cites.length?`<div class="meta">Cita a: ${esc(a.cites.join("; "))}</div>`:""}
+      ${a.screen&&a.screen.verdict==="dudoso"?`<div class="meta" style="color:#b45309">Cribado: dudoso — ${esc(a.screen.reason)}</div>`:""}
+      <div class="tags"><span class="badge ${PRI_CLASS[a.priority]}">${esc(D.meta.priority_labels[a.priority]||"")}</span>
+        ${a.tiers.map(t=>`<span class="badge na">${esc(t)}</span>`).join("")}
+        ${a.tiers.some(t=>t[0]==="S")?`<span class="badge" style="color:#b45309;border-color:#b45309" title="Autor seguido">★ Autor seguido</span>`:""}
+        ${a.screen&&a.screen.verdict==="dudoso"?`<span class="badge b-dud" title="${esc(a.screen.reason)}">⚠ dudoso</span>`:""}
+        ${j.sjr_quartile?qBadge(j.sjr_quartile,"SJR "):""}${j.jcr_quartile?qBadge(j.jcr_quartile,"JCR "):""}
+        ${a.pubtypes.filter(t=>t!=="Journal Article").map(t=>`<span class="badge na">${esc(t)}</span>`).join("")}
+        ${a.pmid?`<a class="meta" href="https://pubmed.ncbi.nlm.nih.gov/${esc(a.pmid)}/" target="_blank" rel="noopener">PMID ${esc(a.pmid)}</a>`:""}
+        ${a.doi?`<a class="meta" href="https://doi.org/${esc(a.doi)}" target="_blank" rel="noopener">DOI</a>`:""}
+        ${a.oa_url?`<a class="meta" style="color:#15803d;font-weight:600" href="${esc(a.oa_url)}" target="_blank" rel="noopener" title="Texto gratuito (${esc(a.oa_status||"OA")})">📄 Texto gratuito</a>`:""}</div>
+      ${a.abstract?`<details><summary>Abstract</summary><p>${esc(a.abstract)}</p></details>`:'<div class="meta">(sin abstract)</div>'}
+      <div class="actions" data-id="${esc(id)}">
+        <button class="btn sm ${zs?"zok":""}" data-act="zotero" title="${SRV?"Guardar en Zotero › "+esc(SRV.collection):"Descargar .ris para importar en Zotero"}">${zs?"✓ En Zotero":(SRV?"➕ Zotero":"⬇ .ris")}</button>
+        <select class="sm mark" title="Mi marca"><option value="">sin marcar</option>${Object.entries(MARK_LABEL).map(([k,v])=>`<option value="${k}" ${mk.state===k?"selected":""}>${v}</option>`).join("")}</select>
+        <button class="btn sm" data-act="note">📝 nota${mk.note?" •":""}</button>
+      </div>
+      <div class="notebox" ${mk.note?"":"hidden"}><textarea class="note" placeholder="Tu nota sobre este artículo…">${esc(mk.note||"")}</textarea></div></div>`;
+  }).join("") : `<div class="empty">Ningún artículo con esos filtros.</div>`;
+  // herramientas de la página y manejadores (se reasignan en cada pintado)
+  $("#tools").innerHTML = `<span class="mode">${SRV?`● Servidor local conectado${ZALIVE===false?" · <span class='warn'>Zotero cerrado</span>":""} · marcas guardadas en <code>out/marks.json</code>`:"○ Modo archivo: Zotero por descarga .ris; marcas solo en este navegador"}</span>
+    <button class="btn sm" id="zall">${SRV?"➕ Enviar a Zotero los":"⬇ Descargar .ris de los"} ${out.length} visibles</button>
+    ${SRV?"":`<button class="btn sm" id="mexp">Exportar marcas</button><button class="btn sm" id="mimp">Importar marcas</button>`}`;
+  $("#zall").onclick = () => out.length && zoteroSend(out);
+  if($("#mexp")){ $("#mexp").onclick = () => download("marcas_monitor.json", JSON.stringify(MARKS,null,1), "application/json");
+    $("#mimp").onclick = () => { const i = document.createElement("input"); i.type="file"; i.accept=".json";
+      i.onchange = () => i.files[0].text().then(tx => { try{ Object.assign(MARKS, JSON.parse(tx)); localStorage.setItem("monitor_marks", JSON.stringify(MARKS)); list(); }catch(e){ alert("JSON no válido"); } }); i.click(); }; }
+  $("#list").onclick = e => { const tp = e.target.closest("[data-topic]"); if(tp){ $("#ftop").value = tp.dataset.topic; list(); $("#ftop").scrollIntoView({block:"center"}); return; }
+    const b = e.target.closest("[data-act]"); if(!b) return; const box = b.closest(".actions"); const id = box.dataset.id;
+    if(b.dataset.act==="zotero" && !ZSAVED.has(id)) zoteroSend([byArt[id]]);
+    if(b.dataset.act==="note"){ const nb = box.parentElement.querySelector(".notebox"); nb.hidden = !nb.hidden; if(!nb.hidden) nb.querySelector("textarea").focus(); } };
+  $("#list").onchange = e => { if(e.target.matches("select.mark")){ const card = e.target.closest(".art"); const id = card.querySelector(".actions").dataset.id;
+    saveMark(id, {state:e.target.value}); card.className = "art"+(e.target.value?" m-"+e.target.value:""); } };
+  let tmr; $("#list").oninput = e => { if(e.target.matches("textarea.note")){ const id = e.target.closest(".art").querySelector(".actions").dataset.id; clearTimeout(tmr);
+    tmr = setTimeout(()=>saveMark(id,{note:e.target.value}), 500); } };
+}
+
+// Datos: {months:[…]} (documento acumulado) o un único mes (compatibilidad). Una "página" por mes, ordenadas por fecha.
+const MONTHS = EMBEDDED ? (EMBEDDED.months ? EMBEDDED.months.slice() : [EMBEDDED]) : [];
+MONTHS.sort((x,y) => x.meta.start < y.meta.start ? -1 : 1);
+const monthKey = m => m.meta.start.slice(0,7);
+const monthName = m => { const [y,mo] = m.meta.start.split("-").map(Number);
+  const s = new Intl.DateTimeFormat("es",{month:"long",year:"numeric"}).format(new Date(y,mo-1,1)); return s.charAt(0).toUpperCase()+s.slice(1); };
+let idx = 0;
+
+function show(i, scroll=true){
+  idx = Math.max(0, Math.min(MONTHS.length-1, i));
+  D = MONTHS[idx]; state = {journal:"", sort:{key:"n",dir:-1}};
+  render();
+  $("#prev").disabled = idx===0; $("#next").disabled = idx===MONTHS.length-1;
+  $("#prev").title = idx>0 ? "Mes anterior: "+monthName(MONTHS[idx-1]) : "No hay meses anteriores";
+  $("#next").title = idx<MONTHS.length-1 ? "Mes siguiente: "+monthName(MONTHS[idx+1]) : "No hay meses posteriores";
+  $("#pageno").textContent = `Página ${idx+1} de ${MONTHS.length}`;
+  try{ history.replaceState(null,"","#"+monthKey(D)); }catch(e){}
+  if(scroll) window.scrollTo({top:0});
+}
+
+function boot(){ if(MONTHS.length){
+  const h = (location.hash||"").slice(1), found = MONTHS.findIndex(m => monthKey(m)===h);
+  show(found>=0 ? found : MONTHS.length-1, false);
+  $("#prev").addEventListener("click", () => show(idx-1));
+  $("#next").addEventListener("click", () => show(idx+1));
+  document.addEventListener("keydown", e => {
+    if(/^(INPUT|SELECT|TEXTAREA)$/.test(e.target.tagName) || e.altKey || e.ctrlKey || e.metaKey) return;
+    if(e.key==="ArrowLeft") show(idx-1); else if(e.key==="ArrowRight") show(idx+1); });
+  window.addEventListener("hashchange", () => { const k = location.hash.slice(1), f = MONTHS.findIndex(m => monthKey(m)===k); if(f>=0 && f!==idx) show(f); });
+} else {
+  $("#prev").disabled = $("#next").disabled = true;
+  $("#app").innerHTML = `<div class="card empty">Sin datos. Ejecuta el script para generar el primer mes.</div>`;
+} }
+loadMarks().then(boot, boot);
+</script>
+</body>
+</html>
